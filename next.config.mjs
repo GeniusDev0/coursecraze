@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  transpilePackages: ['ra-core', 'ra-ui-materialui', 'react-admin'],
   async headers() {
     return [
       {
@@ -32,6 +34,13 @@ const nextConfig = {
         hostname: "**",
       },
     ],
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@mui/styled-engine': '@mui/styled-engine-sc',
+    };
+    return config;
   },
 };
 

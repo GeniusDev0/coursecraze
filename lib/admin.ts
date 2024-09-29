@@ -1,11 +1,21 @@
-import { auth } from "@clerk/nextjs";
+import { auth, currentUser } from "@clerk/nextjs";
 
-export const getIsAdmin = () => {
-  const { userId } = auth();
+export const getIsAdmin = async () => {
+  let userId;
+
+  if (typeof window === "undefined") {
+    // Server-side
+    const { userId: serverUserId } = auth();
+    userId = serverUserId;
+  } else {
+    // Client-side
+    const user = await currentUser();
+    userId = user?.id;
+  }
+
   console.log("Current user ID:", userId);
   
-  // Accessing the environment variable
-  const adminIdsString = process.env.CLERK_ADMIN_IDS;
+  const adminIdsString = process.env.NEXT_PUBLIC_CLERK_ADMIN_IDS;
   console.log("CLERK_ADMIN_IDS env variable:", adminIdsString);
   
   if (!adminIdsString) {
@@ -13,17 +23,14 @@ export const getIsAdmin = () => {
     return false;
   }
   
-  // Split by comma to get an array of admin IDs
-  const adminIds = adminIdsString.split(","); // Change to split(",") if IDs are comma-separated without spaces
+  const adminIds = adminIdsString.split(",").map(id => id.trim());
   console.log("Parsed admin IDs:", adminIds);
 
-  // Check if userId is available
   if (!userId) {
     console.log("No user ID found");
     return false;
   }
   
-  // Check if the current user ID is included in the admin IDs
   const isAdmin = adminIds.includes(userId);
   console.log("Is admin?", isAdmin);
   
