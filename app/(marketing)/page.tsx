@@ -43,8 +43,8 @@ export default function MarketingPage() {
 
               <SignInButton
                 mode="modal"
-                afterSignInUrl="/learn"
-                afterSignUpUrl="/learn"
+                afterSignInUrl="/redirect"
+                afterSignUpUrl="/redirect"
               >
                 <Button size="lg" variant="primaryOutline" className="w-full">
                   I already have an account
@@ -54,7 +54,7 @@ export default function MarketingPage() {
 
             <SignedIn>
               <Button size="lg" variant="secondary" className="w-full" asChild>
-                <Link href="/learn">Continue Learning</Link>
+                <Link href="/redirect">Continue Learning</Link>
               </Button>
             </SignedIn>
           </ClerkLoaded>

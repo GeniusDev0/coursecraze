@@ -4,7 +4,6 @@ import { getIsAdmin } from "@/lib/admin";
 
 export default async function RedirectPage() {
   const isAdmin = await getIsAdmin();
-  
   if (isAdmin) {
     redirect("/admin");
   } else {

@@ -12,7 +12,7 @@ export const getIsAdmin = async () => {
     const user = await currentUser();
     userId = user?.id;
   }
-
+  
   console.log("Current user ID:", userId);
   
   const adminIdsString = process.env.NEXT_PUBLIC_CLERK_ADMIN_IDS;
