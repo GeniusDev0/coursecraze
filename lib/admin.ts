@@ -1,37 +1,29 @@
-import { auth, currentUser } from "@clerk/nextjs";
+/* eslint-disable @typescript-eslint/await-thenable */
+import { auth } from "@clerk/nextjs";
 
 export const getIsAdmin = async () => {
-  let userId;
-
-  if (typeof window === "undefined") {
-    // Server-side
-    const { userId: serverUserId } = auth();
-    userId = serverUserId;
-  } else {
-    // Client-side
-    const user = await currentUser();
-    userId = user?.id;
-  }
+  const { userId } = await auth();
   
   console.log("Current user ID:", userId);
+  const adminId = process.env.CLERK_ADMIN_IDS;
+  console.log("CLERK_ADMIN_IDS env variable:", adminId);
   
-  const adminIdsString = process.env.NEXT_PUBLIC_CLERK_ADMIN_IDS;
-  console.log("CLERK_ADMIN_IDS env variable:", adminIdsString);
-  
-  if (!adminIdsString) {
+  if (!adminId) {
     console.error("CLERK_ADMIN_IDS is not set in the environment variables");
     return false;
   }
   
-  const adminIds = adminIdsString.split(",").map(id => id.trim());
-  console.log("Parsed admin IDs:", adminIds);
+  // Remove any surrounding quotes from the adminId
+  const cleanAdminId = adminId.replace(/^["']|["']$/g, '').trim();
+  
+  console.log("Cleaned admin ID:", cleanAdminId);
 
   if (!userId) {
     console.log("No user ID found");
     return false;
   }
   
-  const isAdmin = adminIds.includes(userId);
+  const isAdmin = userId === cleanAdminId;
   console.log("Is admin?", isAdmin);
   
   return isAdmin;

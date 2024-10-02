@@ -24,25 +24,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      appearance={{
-        layout: {
-          logoImageUrl: "/favicon.ico",
-        },
-        variables: {
-          colorPrimary: "#22C55E",
-        },
-      }}
-    >
-      <html lang="en">
-        <body className={font.className}>
+    <html lang="en">
+      <body className={font.className}>
+        <ClerkProvider
+          appearance={{
+            layout: {
+              logoImageUrl: "/favicon.ico",
+            },
+            variables: {
+              colorPrimary: "#22C55E",
+            },
+          }}
+        >
           <Toaster theme="light" richColors closeButton />
           <ExitModal />
           <HeartsModal />
           <PracticeModal />
           {children}
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

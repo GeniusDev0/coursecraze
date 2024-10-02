@@ -1,3 +1,5 @@
+import React from "react";
+
 import { lessons, units } from "@/db/schema";
 
 import { LessonButton } from "./lesson-button";

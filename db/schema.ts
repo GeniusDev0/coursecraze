@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, type InferSelectModel } from "drizzle-orm";
 import {
   boolean,
   integer,
@@ -11,28 +11,40 @@ import {
 
 import { MAX_HEARTS } from "@/constants";
 
+export const userRoleEnum = pgEnum("role", ["STUDENT", "TEACHER"]);
+
 export const courses = pgTable("courses", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   imageSrc: text("image_src").notNull(),
+  teacherId: text("teacher_id"),
+  isPublic: boolean("is_public").notNull().default(false),
+  isPaid: boolean("is_paid").notNull().default(false),
+  price: integer("price"),
 });
 
-export const coursesRelations = relations(courses, ({ many }) => ({
+export type Course = InferSelectModel<typeof courses>;
+
+export const coursesRelations = relations(courses, ({ many, one }) => ({
   userProgress: many(userProgress),
   units: many(units),
+  teacher: one(userProgress, {
+    fields: [courses.teacherId],
+    references: [userProgress.userId],
+  }),
+  classes: many(classes),
 }));
 
 export const units = pgTable("units", {
   id: serial("id").primaryKey(),
-  title: text("title").notNull(), // Unit 1
-  description: text("description").notNull(), // Learn the basics of spanish
-  courseId: integer("course_id")
-    .references(() => courses.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  courseId: integer("course_id").notNull(),
   order: integer("order").notNull(),
+  isExam: boolean("is_exam").notNull().default(false),
 });
+
+export type Unit = InferSelectModel<typeof units>;
 
 export const unitsRelations = relations(units, ({ many, one }) => ({
   course: one(courses, {
@@ -45,13 +57,11 @@ export const unitsRelations = relations(units, ({ many, one }) => ({
 export const lessons = pgTable("lessons", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
-  unitId: integer("unit_id")
-    .references(() => units.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
+  unitId: integer("unit_id").notNull(),
   order: integer("order").notNull(),
 });
+
+export type Lesson = InferSelectModel<typeof lessons>;
 
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({
   unit: one(units, {
@@ -65,15 +75,13 @@ export const challengesEnum = pgEnum("type", ["SELECT", "ASSIST"]);
 
 export const challenges = pgTable("challenges", {
   id: serial("id").primaryKey(),
-  lessonId: integer("lesson_id")
-    .references(() => lessons.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
+  lessonId: integer("lesson_id").notNull(),
   type: challengesEnum("type").notNull(),
   question: text("question").notNull(),
   order: integer("order").notNull(),
 });
+
+export type Challenge = InferSelectModel<typeof challenges>;
 
 export const challengesRelations = relations(challenges, ({ one, many }) => ({
   lesson: one(lessons, {
@@ -86,16 +94,14 @@ export const challengesRelations = relations(challenges, ({ one, many }) => ({
 
 export const challengeOptions = pgTable("challenge_options", {
   id: serial("id").primaryKey(),
-  challengeId: integer("challenge_id")
-    .references(() => challenges.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
+  challengeId: integer("challenge_id").notNull(),
   text: text("text").notNull(),
   correct: boolean("correct").notNull(),
   imageSrc: text("image_src"),
   audioSrc: text("audio_src"),
 });
+
+export type ChallengeOption = InferSelectModel<typeof challengeOptions>;
 
 export const challengeOptionsRelations = relations(
   challengeOptions,
@@ -110,13 +116,11 @@ export const challengeOptionsRelations = relations(
 export const challengeProgress = pgTable("challenge_progress", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
-  challengeId: integer("challenge_id")
-    .references(() => challenges.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
+  challengeId: integer("challenge_id").notNull(),
   completed: boolean("completed").notNull().default(false),
 });
+
+export type ChallengeProgress = InferSelectModel<typeof challengeProgress>;
 
 export const challengeProgressRelations = relations(
   challengeProgress,
@@ -132,18 +136,22 @@ export const userProgress = pgTable("user_progress", {
   userId: text("user_id").primaryKey(),
   userName: text("user_name").notNull().default("User"),
   userImageSrc: text("user_image_src").notNull().default("/mascot.svg"),
-  activeCourseId: integer("active_course_id").references(() => courses.id, {
-    onDelete: "cascade",
-  }),
+  activeCourseId: integer("active_course_id"),
   hearts: integer("hearts").notNull().default(MAX_HEARTS),
   points: integer("points").notNull().default(0),
+  role: userRoleEnum("role").notNull().default("STUDENT"),
 });
 
-export const userProgressRelations = relations(userProgress, ({ one }) => ({
+export type UserProgress = InferSelectModel<typeof userProgress>;
+
+export const userProgressRelations = relations(userProgress, ({ one, many }) => ({
   activeCourse: one(courses, {
     fields: [userProgress.activeCourseId],
     references: [courses.id],
   }),
+  classes: many(classStudents),
+  taughtCourses: many(courses, { relationName: "teacherCourses" }),
+  taughtClasses: many(classes, { relationName: "teacherClasses" }),
 }));
 
 export const userSubscription = pgTable("user_subscription", {
@@ -155,22 +163,44 @@ export const userSubscription = pgTable("user_subscription", {
   stripeCurrentPeriodEnd: timestamp("stripe_current_period_end").notNull(),
 });
 
-export const teachers = pgTable("teachers", {
+export type UserSubscription = InferSelectModel<typeof userSubscription>;
+
+export const classes = pgTable("classes", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").notNull().unique(), // Unique identifier for the teacher
-  userName: text("user_name").notNull().default("Teacher"), // Default name
-  userImageSrc: text("user_image_src").notNull().default("/mascot.svg"), // Default image
-  activeCourseId: integer("active_course_id").references(() => courses.id, {
-    onDelete: "cascade",
-  }), // Course they are currently active in
-  hearts: integer("hearts").notNull().default(MAX_HEARTS), // Hearts count
-  points: integer("points").notNull().default(0), // Points for the teacher
+  name: text("name").notNull(),
+  teacherId: text("teacher_id").notNull(),
+  courseId: integer("course_id").notNull(),
 });
 
-// Relations for teachers
-export const teachersRelations = relations(teachers, ({ one }) => ({
-  activeCourse: one(courses, {
-    fields: [teachers.activeCourseId],
+export type Class = InferSelectModel<typeof classes>;
+
+export const classesRelations = relations(classes, ({ one, many }) => ({
+  teacher: one(userProgress, {
+    fields: [classes.teacherId],
+    references: [userProgress.userId],
+  }),
+  course: one(courses, {
+    fields: [classes.courseId],
     references: [courses.id],
+  }),
+  students: many(classStudents),
+}));
+
+export const classStudents = pgTable("class_students", {
+  id: serial("id").primaryKey(),
+  classId: integer("class_id").notNull(),
+  userId: text("user_id").notNull(),
+});
+
+export type ClassStudent = InferSelectModel<typeof classStudents>;
+
+export const classStudentsRelations = relations(classStudents, ({ one }) => ({
+  class: one(classes, {
+    fields: [classStudents.classId],
+    references: [classes.id],
+  }),
+  student: one(userProgress, {
+    fields: [classStudents.userId],
+    references: [userProgress.userId],
   }),
 }));

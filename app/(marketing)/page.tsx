@@ -34,7 +34,7 @@ export default function MarketingPage() {
               <SignUpButton
                 mode="modal"
                 afterSignInUrl="/redirect"
-                afterSignUpUrl="/redirect"
+                afterSignUpUrl="/roles"
               >
                 <Button size="lg" variant="secondary" className="w-full">
                   Get Started
@@ -44,7 +44,7 @@ export default function MarketingPage() {
               <SignInButton
                 mode="modal"
                 afterSignInUrl="/redirect"
-                afterSignUpUrl="/redirect"
+                afterSignUpUrl="/roles"
               >
                 <Button size="lg" variant="primaryOutline" className="w-full">
                   I already have an account

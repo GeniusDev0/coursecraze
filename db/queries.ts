@@ -11,6 +11,8 @@ import {
   units,
   userProgress,
   userSubscription,
+  classes,
+  classStudents,
 } from "./schema";
 
 const DAY_IN_MS = 86_400_000;
@@ -30,6 +32,16 @@ export const getUserProgress = cache(async () => {
     where: eq(userProgress.userId, userId),
     with: {
       activeCourse: true,
+      classes: {
+        with: {
+          class: {
+            with: {
+              course: true,
+              teacher: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -96,6 +108,8 @@ export const getCourseById = cache(async (courseId: number) => {
           },
         },
       },
+      teacher: true,
+      classes: true,
     },
   });
 
@@ -244,3 +258,97 @@ export const getTopTenUsers = cache(async () => {
 
   return data;
 });
+
+export const getTeacherProgress = cache(async () => {
+  const { userId } = auth();
+
+  if (!userId) return null;
+
+  const data = await db.query.userProgress.findFirst({
+    where: eq(userProgress.userId, userId),
+    with: {
+      activeCourse: true,
+      taughtCourses: true,
+      taughtClasses: true,
+    },
+  });
+
+  return data;
+});
+
+export const getClassById = cache(async (classId: number) => {
+  const data = await db.query.classes.findFirst({
+    where: eq(classes.id, classId),
+    with: {
+      teacher: true,
+      course: true,
+      students: {
+        with: {
+          student: true,
+        },
+      },
+    },
+  });
+
+  return data;
+});
+
+export const getTeacherById = cache(async (teacherId: string) => {
+  const data = await db.query.userProgress.findFirst({
+    where: eq(userProgress.userId, teacherId),
+    with: {
+      activeCourse: true,
+      taughtCourses: true,
+      taughtClasses: true,
+    },
+  });
+
+  return data;
+});
+
+export const getTeacherClasses = cache(async (teacherId: string) => {
+  const data = await db.query.classes.findMany({
+    where: eq(classes.teacherId, teacherId),
+    with: {
+      course: true,
+      students: {
+        with: {
+          student: true,
+        },
+      },
+    },
+  });
+
+  return data;
+});
+
+export const getStudentClasses = cache(async () => {
+  const { userId } = auth();
+
+  if (!userId) return [];
+
+  const data = await db.query.classStudents.findMany({
+    where: eq(classStudents.userId, userId),
+    with: {
+      class: {
+        with: {
+          teacher: true,
+          course: true,
+        },
+      },
+    },
+  });
+
+  return data;
+});
+
+export const setUserRole = cache(async (userId: string, role: "STUDENT" | "TEACHER") => {
+  const updatedUser = await db
+    .update(userProgress)
+    .set({ role })
+    .where(eq(userProgress.userId, userId))
+    .returning();
+
+  return updatedUser[0];
+});
+

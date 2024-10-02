@@ -5,10 +5,12 @@ import { getIsTeacher } from "@/lib/teacher";
 
 const App = dynamic(() => import("./app"), { ssr: false });
 
-const teacherPage = () => {
-  const isAdmin = getIsTeacher();
+const teacherPage = async () => {
+  const isTeacher = await getIsTeacher();
 
-  if (!isAdmin) redirect("/");
+  if (!isTeacher) {
+    redirect("/");
+  }
 
   return (
     <div>
