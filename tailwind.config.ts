@@ -32,6 +32,9 @@ const config = {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
+        tertiary: {
+          DEFAULT: "#8BC826",
+        },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
@@ -52,6 +55,27 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        duo: {
+          DEFAULT: "#58cc02",
+          hover: "#46a302",
+          blue: {
+            DEFAULT: "#1cb0f6",
+            hover: "#1899d6",
+          },
+          gray: {
+            DEFAULT: "#4b4b4b",
+            muted: "#777777",
+            light: "#e5e5e5",
+          },
+          success: "#58cc02",
+          error: "#ff4b4b",
+          warning: "#ffc800",
+          purple: "#ce82ff",
+          orange: "#ff9600",
+        },
+      },
+      fontFamily: {
+        nunito: ["Nunito", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",

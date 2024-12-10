@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useCallback } from "react";
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Confetti from "react-confetti";
-import { useAudio, useWindowSize, useMount } from "react-use";
+import { useWindowSize, useMount } from "react-use";
 import { toast } from "sonner";
 
 import { upsertChallengeProgress } from "@/actions/challenge-progress";
@@ -43,45 +43,48 @@ export const Quiz = ({
   initialLessonChallenges,
   userSubscription,
 }: QuizProps) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [correctAudio, _c, correctControls] = useAudio({ src: "/correct.wav" });
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [incorrectAudio, _i, incorrectControls] = useAudio({
-    src: "/incorrect.wav",
-  });
-  const [finishAudio] = useAudio({
-    src: "/finish.mp3",
-    autoPlay: true,
-  });
   const { width, height } = useWindowSize();
-
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const { open: openHeartsModal } = useHeartsModal();
   const { open: openPracticeModal } = usePracticeModal();
 
+  const [lessonId] = useState(initialLessonId);
+  const [hearts, setHearts] = useState(initialHearts);
+  const [percentage, setPercentage] = useState(initialPercentage);
+  const [challenges] = useState(initialLessonChallenges);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<number>();
+  const [status, setStatus] = useState<"none" | "wrong" | "correct">("none");
+  const [isCompleted, setIsCompleted] = useState(false);
+
+  const challenge = challenges[activeIndex];
+
   useMount(() => {
     if (initialPercentage === 100) openPracticeModal();
   });
 
-  const [lessonId] = useState(initialLessonId);
-  const [hearts, setHearts] = useState(initialHearts);
-  const [percentage, setPercentage] = useState(() => {
-    return initialPercentage === 100 ? 0 : initialPercentage;
-  });
-  const [challenges] = useState(initialLessonChallenges);
-  const [activeIndex, setActiveIndex] = useState(() => {
-    const uncompletedIndex = challenges.findIndex(
-      (challenge) => !challenge.completed
-    );
+  useEffect(() => {
+    const incompleteIndex = challenges.findIndex(c => !c.completed);
+    if (incompleteIndex !== -1) {
+      setActiveIndex(incompleteIndex);
+      setIsCompleted(false);
+    } else {
+      setIsCompleted(true);
+    }
+  }, [challenges]);
 
-    return uncompletedIndex === -1 ? 0 : uncompletedIndex;
-  });
+  useEffect(() => {
+    if (status === "correct" && activeIndex === challenges.length - 1) {
+      setIsCompleted(true);
+    }
+  }, [status, activeIndex, challenges.length]);
 
-  const [selectedOption, setSelectedOption] = useState<number>();
-  const [status, setStatus] = useState<"none" | "wrong" | "correct">("none");
+  const playAudio = useCallback((src: string) => {
+    const audio = new Audio(src);
+    audio.play().catch(error => console.error("Failed to play audio:", error));
+  }, []);
 
-  const challenge = challenges[activeIndex];
   const options = challenge?.challengeOptions ?? [];
 
   const onNext = () => {
@@ -90,7 +93,6 @@ export const Quiz = ({
 
   const onSelect = (id: number) => {
     if (status !== "none") return;
-
     setSelectedOption(id);
   };
 
@@ -104,6 +106,10 @@ export const Quiz = ({
     }
 
     if (status === "correct") {
+      if (activeIndex === challenges.length - 1) {
+        setIsCompleted(true);
+        return;
+      }
       onNext();
       setStatus("none");
       setSelectedOption(undefined);
@@ -123,11 +129,10 @@ export const Quiz = ({
               return;
             }
 
-            void correctControls.play();
+            playAudio("/correct.wav");
             setStatus("correct");
             setPercentage((prev) => prev + 100 / challenges.length);
 
-            // This is a practice
             if (initialPercentage === 100) {
               setHearts((prev) => Math.min(prev + 1, MAX_HEARTS));
             }
@@ -143,7 +148,7 @@ export const Quiz = ({
               return;
             }
 
-            void incorrectControls.play();
+            playAudio("/incorrect.wav");
             setStatus("wrong");
 
             if (!response?.error) setHearts((prev) => Math.max(prev - 1, 0));
@@ -153,10 +158,14 @@ export const Quiz = ({
     }
   };
 
-  if (!challenge) {
+  if (!initialLessonChallenges || initialLessonChallenges.length === 0) {
+    console.error("No challenges found for this lesson");
+    return <div>No challenges found for this lesson. Please try another course.</div>;
+  }
+
+  if (isCompleted) {
     return (
       <>
-        {finishAudio}
         <Confetti
           recycle={false}
           numberOfPieces={500}
@@ -203,15 +212,14 @@ export const Quiz = ({
     );
   }
 
-  const title =
-    challenge.type === "ASSIST"
-      ? "Select the correct meaning"
-      : challenge.question;
+  if (!challenge) {
+    return null;
+  }
+
+  const title = challenge.type === "ASSIST" ? "Select the correct meaning" : challenge.question;
 
   return (
     <>
-      {incorrectAudio}
-      {correctAudio}
       <Header
         hearts={hearts}
         percentage={percentage}

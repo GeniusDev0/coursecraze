@@ -4,7 +4,7 @@ import { getUserProgress } from "@/db/queries";
 
 export const getIsTeacher = async () => {
   const { userId } = auth();
-  
+
   if (!userId) {
     console.log("No user ID found");
     return false;

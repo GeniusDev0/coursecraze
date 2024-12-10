@@ -23,8 +23,9 @@ export const courses = pgTable("courses", {
   price: integer("price"),
 });
 
-export type Course = InferSelectModel<typeof courses>;
-
+export type Course = InferSelectModel<typeof courses> & {
+  units?: (Unit & { lessons?: Lesson[] })[];
+};
 export const coursesRelations = relations(courses, ({ many, one }) => ({
   userProgress: many(userProgress),
   units: many(units),
@@ -41,7 +42,7 @@ export const units = pgTable("units", {
   description: text("description").notNull(),
   courseId: integer("course_id").notNull(),
   order: integer("order").notNull(),
-  isExam: boolean("is_exam").notNull().default(false),
+  isCompleted: boolean("is_completed").notNull().default(false),
 });
 
 export type Unit = InferSelectModel<typeof units>;
@@ -135,7 +136,7 @@ export const challengeProgressRelations = relations(
 export const userProgress = pgTable("user_progress", {
   userId: text("user_id").primaryKey(),
   userName: text("user_name").notNull().default("User"),
-  userImageSrc: text("user_image_src").notNull().default("/mascot.svg"),
+  userImageSrc: text("user_image_src").notNull().default("/mascot.png"),
   activeCourseId: integer("active_course_id"),
   hearts: integer("hearts").notNull().default(MAX_HEARTS),
   points: integer("points").notNull().default(0),
@@ -150,8 +151,8 @@ export const userProgressRelations = relations(userProgress, ({ one, many }) => 
     references: [courses.id],
   }),
   classes: many(classStudents),
-  taughtCourses: many(courses, { relationName: "teacherCourses" }),
-  taughtClasses: many(classes, { relationName: "teacherClasses" }),
+  taughtCourses: many(courses, { relationName: "teacher" }),
+  taughtClasses: many(classes, { relationName: "teacher" }),
 }));
 
 export const userSubscription = pgTable("user_subscription", {
@@ -170,10 +171,12 @@ export const classes = pgTable("classes", {
   name: text("name").notNull(),
   teacherId: text("teacher_id").notNull(),
   courseId: integer("course_id").notNull(),
+  imageSrc: text("image_src").notNull().default("/placeholder-class.png"),
 });
 
-export type Class = InferSelectModel<typeof classes>;
-
+export type Class = InferSelectModel<typeof classes> & {
+  students: ClassStudent[];
+};
 export const classesRelations = relations(classes, ({ one, many }) => ({
   teacher: one(userProgress, {
     fields: [classes.teacherId],
@@ -204,3 +207,14 @@ export const classStudentsRelations = relations(classStudents, ({ one }) => ({
     references: [userProgress.userId],
   }),
 }));
+
+export const articles = pgTable("articles", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  content: text("content").notNull(),
+  readTime: integer("read_time").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type Article = InferSelectModel<typeof articles>;

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const siteConfig: Metadata = {
-  title: "CourseCraze",
+  title: "Coursim",
   description:
     "Interactive platform for language learning with lessons, quizzes, and progress tracking.",
   keywords: [
@@ -42,8 +42,4 @@ export const siteConfig: Metadata = {
   authors: {
     name: "Gal Etrog"
   },
-} as const;
-
-export const links = {
-  sourceCode: "https://github.com/sanidhyy/duolingo-clone",
 } as const;

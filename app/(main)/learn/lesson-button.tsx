@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Crown, Star } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CircularProgressbarWithChildren } from "react-circular-progressbar";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ type LessonButtonProps = {
   locked?: boolean;
   current?: boolean;
   percentage: number;
+  completed?: boolean;
 };
 
 export const LessonButton = ({
@@ -25,7 +26,9 @@ export const LessonButton = ({
   locked,
   current,
   percentage,
+  completed
 }: LessonButtonProps) => {
+  const router = useRouter();
   const cycleLength = 8;
   const cycleIndex = index % cycleLength;
 
@@ -42,20 +45,26 @@ export const LessonButton = ({
   const isLast = index === totalCount;
   const isCompleted = !current && !locked;
 
-  const Icon = isCompleted ? Check : isLast ? Crown : Star;
+  const Icon = completed ? Check : isLast ? Crown : Star;
 
-  const href = isCompleted ? `/lesson/${id}` : "/lesson";
+
+  const handleClick = () => {
+    if (locked) return;
+    if (current || isCompleted) {
+      router.push(`/lesson/${id}`);
+    }
+  };
 
   return (
-    <Link
-      href={href}
+    <div
+      onClick={handleClick}
       aria-disabled={locked}
       style={{ pointerEvents: locked ? "none" : "auto" }}
     >
       <div
         className="relative"
         style={{
-          right: `${rightPosition}px`,
+          left: `${rightPosition}px`,
           marginTop: isFirst && !isCompleted ? 60 : 24,
         }}
       >
@@ -114,6 +123,6 @@ export const LessonButton = ({
           </Button>
         )}
       </div>
-    </Link>
+    </div>
   );
 };

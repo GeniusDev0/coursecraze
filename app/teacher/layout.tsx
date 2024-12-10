@@ -2,18 +2,20 @@ import type { PropsWithChildren } from "react";
 import React from "react";
 
 import { AdminMobileHeader } from "@/components/teacher-mobile-header";
-import { AdminSidebar } from "@/components/teacher-mobile-sidebar";
+import { TeacherSidebar } from "@/components/teacher-mobile-sidebar";
 
-const AdminLayout = ({ children }: PropsWithChildren) => {
+const TeacherLayout = ({ children }: PropsWithChildren) => {
   return (
-    <>
+    <div className="h-screen w-full">
       <AdminMobileHeader />
-      <AdminSidebar className="hidden lg:flex" />
-      <main className="h-full pt-[50px] lg:pl-[256px] lg:pt-0">
-        <div className="mx-auto h-full max-w-[1056px] pt-6">{children}</div>
+      <TeacherSidebar className="hidden lg:flex" />
+      <main className="h-full w-full pt-[50px] lg:pl-[256px] lg:pt-0">
+        <div className="h-full w-full">
+          {children}
+        </div>
       </main>
-    </>
+    </div>
   );
 };
 
-export default AdminLayout;
+export default TeacherLayout;

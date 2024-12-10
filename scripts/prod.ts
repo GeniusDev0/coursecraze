@@ -21,6 +21,8 @@ const main = async () => {
       db.delete(schema.courses),
       db.delete(schema.challengeOptions),
       db.delete(schema.userSubscription),
+      db.delete(schema.classStudents),
+      db.delete(schema.classes),
     ]);
 
     // Insert courses
@@ -28,6 +30,25 @@ const main = async () => {
       .insert(schema.courses)
       .values([{ title: "Spanish", imageSrc: "/es.svg" }])
       .returning();
+
+    // Add class with specified teacher and student
+    const teacherId = "user_2msxwqd5TJqqHMiXI2kBRq4TnQy";
+    const studentId = "user_2mhMZQtLJjIgaR2FjbRnUbRA6ec";
+
+    const newClass = await db
+      .insert(schema.classes)
+      .values({
+        name: "Spanish 101",
+        teacherId: teacherId,
+        courseId: courses[0].id,
+        imageSrc: "/es.svg",
+      })
+      .returning();
+
+    await db.insert(schema.classStudents).values({
+      classId: newClass[0].id,
+      userId: studentId,
+    });
 
     // For each course, insert units
     for (const course of courses) {

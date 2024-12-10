@@ -10,7 +10,7 @@ const returnUrl = absoluteUrl("/shop");
 
 // Configuration for the subscription plan
 const subscriptionDetails = {
-  name: "CourseCraze Teacher",
+  name: "Coursim Teacher",
   description: "Creating and sharing courses.",
   amount: 1499, // Amount in cents ($14.99)
   currency: "USD",
